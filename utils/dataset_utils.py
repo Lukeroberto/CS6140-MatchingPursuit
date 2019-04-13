@@ -1,6 +1,6 @@
 import numpy as np
 from PIL import Image
-from sklearn.decomposition import PCA
+
 
 import glob
 
@@ -55,28 +55,3 @@ def samplePatches(num_samples, patches):
     random_patches = np.random.choice(patches.shape[0], num_samples, replace=False)
     return patches[random_patches, :, :]
 
-def computePCA(num_features, samples):
-
-    pca = PCA(n_components=num_features)
-
-    # Squeeze sample patches to be array
-    print("Num samples", len(samples))
-    pca.fit(np.reshape(samples, (np.shape(samples)[0], np.shape(samples)[1] ** 2)))
-
-    features = pca.components_
-
-    filter_size = np.shape(samples)[1]
-    filter_features = np.zeros((len(features), filter_size, filter_size))
-
-    for i, feature in enumerate(features):
-        filter_features[i] = np.reshape(feature, (filter_size, filter_size))
-
-    return filter_features
-
-
-def generateDictionary(images, patch_size, num_samples, num_features):
-
-    video_patches, _ = generateVideoPatches(patch_size, images)
-    samples = samplePatches(num_samples, video_patches)
-
-    return computePCA(num_features, samples)

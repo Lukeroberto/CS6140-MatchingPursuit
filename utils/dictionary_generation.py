@@ -1,5 +1,5 @@
 import numpy as np 
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, SparsePCA, DictionaryLearning
 from utils.dataset_utils import samplePatches, generateVideoPatches
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -21,8 +21,38 @@ def plotDictionary(features, title=''):
 
 def generatePSDDictionary(images, patch_size, num_samples, num_features):
 	# https://cs.nyu.edu/~yann/research/sparse/index.html
+	video_patches, _ = generateVideoPatches(patch_size, images)
+	samples = samplePatches(num_samples, video_patches)
 	pass
 
+def generateSparsePCADictionary(images, patch_size, num_samples, num_features):
+	video_patches, _ = generateVideoPatches(patch_size, images)
+	samples = samplePatches(num_samples, video_patches)
+	pca = SparsePCA(n_components=num_features, normalize_components=True,
+					alpha =1, max_iter=100)
+
+
+	# Squeeze sample patches to be array
+	pca.fit(samples.reshape(np.shape(samples)[0], np.shape(samples)[1] ** 2))
+	features = pca.components_
+
+	filter_size = np.shape(samples)[1]
+
+	return features.reshape(features.shape[0], filter_size, filter_size)
+
+def generateOptSparseDictionary(images, patch_size, num_samples, num_features):
+	video_patches, _ = generateVideoPatches(patch_size, images)
+	samples = samplePatches(num_samples, video_patches)
+	alg = DictionaryLearning(n_components=num_features, max_iter=100)
+
+
+	# Squeeze sample patches to be array
+	alg.fit(samples.reshape(np.shape(samples)[0], np.shape(samples)[1] ** 2))
+	features = alg.components_
+
+	filter_size = np.shape(samples)[1]
+
+	return features.reshape(features.shape[0], filter_size, filter_size)
 
 def generateSIFTDictionary(images, patch_size, num_samples, num_features):
 	pass
