@@ -18,8 +18,10 @@ def loadVideo(location, num_frames):
     return images[:num_frames]
 
 def generateImagePatches(patch_size, image):
-
     height, width = np.shape(image)
+    image = image[:(height//patch_size)*patch_size,:(width//patch_size)*patch_size]
+    height, width = np.shape(image)
+
     assert height % patch_size == 0, height % patch_size
     assert width % patch_size == 0, width % patch_size
 
