@@ -38,7 +38,6 @@ def matchingPursuit(image, features, k_matches):
 
     return S_code
 
-
 def generateReconImage(S_code, original_image, features):
     patch_size = features[0].shape[0]
     stride = original_image.shape[1] // patch_size

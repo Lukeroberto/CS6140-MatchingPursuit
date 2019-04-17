@@ -43,7 +43,7 @@ def generateSparsePCADictionary(images, patch_size, num_samples, num_features):
 def generateOptSparseDictionary(images, patch_size, num_samples, num_features):
 	video_patches, _ = generateVideoPatches(patch_size, images)
 	samples = samplePatches(num_samples, video_patches)
-	alg = DictionaryLearning(n_components=num_features, max_iter=100)
+	alg = DictionaryLearning(n_components=num_features)
 
 
 	# Squeeze sample patches to be array

@@ -1,7 +1,6 @@
 import numpy as np
 from PIL import Image
 
-
 import glob
 
 def loadVideo(location, num_frames):
@@ -16,6 +15,16 @@ def loadVideo(location, num_frames):
 
 
     return images[:num_frames]
+
+def cropImages(images, width=50, height=50, offset_x=0.5, offset_y=0.5, downsampling=2):
+    full_height, full_width = images[0].shape
+    offset_x = int(full_width*offset_x)
+    offset_y = int(full_height*offset_y)
+    ret = []
+    for image in images:
+        i = image[offset_y:offset_y+downsampling*height, offset_x:offset_x+downsampling*width]
+        ret.append(i[::downsampling,::downsampling])
+    return ret
 
 def generateImagePatches(patch_size, image):
     image = image.astype(np.float32) / 256
