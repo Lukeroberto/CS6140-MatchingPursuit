@@ -16,7 +16,7 @@ def loadVideo(location, num_frames):
 
     return images[:num_frames]
 
-def cropImages(images, width=50, height=50, offset_x=0.5, offset_y=0.5, downsampling=2):
+def cropImages(images, width=200, height=200, offset_x=0.5, offset_y=0.4, downsampling=1):
     full_height, full_width = images[0].shape
     offset_x = int(full_width*offset_x)
     offset_y = int(full_height*offset_y)

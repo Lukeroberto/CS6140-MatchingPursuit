@@ -24,7 +24,7 @@ def matchingPursuit(image, features, k_matches):
     for i in tqdm(range(k_matches)):
 
         # Match list is number of patchs by number of features
-        match_list = np.matmul(mat_patches, mat_features.T)
+        match_list = np.abs(np.matmul(mat_patches, mat_features.T))
 
         # Get sorted indicies of match_list
         best_match_ind = np.argmax(match_list.reshape(-1))
