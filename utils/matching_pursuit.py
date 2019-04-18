@@ -6,7 +6,7 @@ import matplotlib.animation as animation
 
 from utils.dataset_utils import generateImagePatches
 
-def orthogonalMatchingPursuit(image, features, k_matches, verbose=False):
+def greedyMatchingPursuit(image, features, k_matches, verbose=False):
     patch_size = features[0].shape[0]
 
     # Loops through patches in an image
@@ -49,38 +49,38 @@ def orthogonalMatchingPursuit(image, features, k_matches, verbose=False):
     return S_code
 
 def convolutionalMatchingPursuit(image, features, k_matches, verbose=False):
-    image_float = image.astype(np.float32) / 256
-    
-    # Sparse Code output
-    S_code = list()
+	image_original = np.copy(image)
+	
+	# Sparse Code output
+	S_code = list()
 
-    # Progress bar
-    pbar = range(k_matches)
-    if verbose:
-        pbar = tqdm(range(k_matches))
-        
-    # Loop over for K best matches
-    for i in pbar:
+	# Progress bar
+	pbar = range(k_matches)
+	if verbose:
+		pbar = tqdm(range(k_matches))
 
-        # Keep track of patch convolutions
-        match_list = np.zeros(features.shape[0]) 
-        convolved_features = np.zeros((features.shape[0], image_float.shape[0], image_float.shape[1]))
-        
-        # Convolve features with image
-        for i, feature in enumerate(features): 
-            convolved_features[i] = scipy.signal.convolve2d(image_float, feature, mode="same")
-            match_list[i] = np.linalg.norm(convolved_features[i])
-            
-        # Get sorted indicies of match_list
-        best_feature_ind = np.argmax(match_list)
+	# Loop over for K best matches
+	for i in pbar:
 
-        # Remove contribution of feature from image
-        image_float -= convolved_features[best_feature_ind]
+		# Keep track of patch convolutions
+		match_list = np.zeros(features.shape[0]) 
+		convolved_features = np.zeros((features.shape[0], image.shape[0], image.shape[1]))
 
-        # Add this feature to our sparse code
-        S_code.append((best_feature_ind, match_list[best_feature_ind]))
+		# Convolve features with image
+		for i, feature in enumerate(features): 
+			convolved_features[i] = scipy.signal.convolve2d(image_original, feature, mode="same")
+			match_list[i] = np.linalg.norm(convolved_features[i])
 
-    return S_code
+		# Get sorted indicies of match_list
+		best_feature_ind = np.argmax(match_list)
+
+		# Remove contribution of feature from image
+		image -= convolved_features[best_feature_ind]
+
+		# Add this feature to our sparse code
+		S_code.append((best_feature_ind, match_list[best_feature_ind]))
+
+	return S_code
 
 def temporalMatchingPursuit(image, features, k_matches):
     pass
@@ -107,11 +107,10 @@ def generateReconImage(S_code, original_image, features):
         x = patch_id % stride
 
         # Set equal to weighted sum of features
-
         recon_image[y * patch_size: (y + 1) * patch_size,
                     x * patch_size: (x + 1) * patch_size] += weight * features[feature_id]
 
-    return recon_image
+    return recon_image + 0.5
 
 def generateReconVideo(S_codes, original_video, features):
     

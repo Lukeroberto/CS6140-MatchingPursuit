@@ -13,7 +13,7 @@ def loadVideo(location, num_frames):
     images = list()
     for filename in sorted(glob.glob(location + rel_loc + "*.png")):
         img = np.array(Image.open(filename))
-        images.append(img)
+        images.append(img.astype(np.float32) / 256)
 
 
     return images[:num_frames]
@@ -29,7 +29,6 @@ def cropImages(images, width=200, height=200, offset_x=0.5, offset_y=0.4, downsa
     return ret
 
 def generateImagePatches(patch_size, image):
-    image = image.astype(np.float32) / 256
     height, width = np.shape(image)
     image = image[:(height//patch_size)*patch_size,:(width//patch_size)*patch_size]
     height, width = np.shape(image)
@@ -90,7 +89,7 @@ def animateVideo(video):
     return ani
 
 def compareVideos(video1, video2):
-    f, (ax1, ax2) = plt.subplots(2, 1, sharey=True)
+    f, (ax1, ax2) = plt.subplots(1,2, sharey=True,figsize=(12,6))
     ims = []
     for i in range(len(video1)):
         im1 = ax1.imshow(video1[i], cmap="Greys_r", animated=True)
