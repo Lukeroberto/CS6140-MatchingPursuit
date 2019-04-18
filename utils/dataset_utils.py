@@ -64,3 +64,15 @@ def generateVideoPatches(patch_size, images):
 def samplePatches(num_samples, patches):
     random_patches = np.random.choice(patches.shape[0], num_samples, replace=False)
     return patches[random_patches, :, :]
+
+def generateGifFromVideo(video, path):
+    fig = plt.figure()
+    ims = []
+    for img in video:
+        im = plt.imshow(img, cmap="Greys_r", animated=True)
+        ims.append([im])
+
+    ani = animation.ArtistAnimation(fig, ims, interval=5, blit=True,
+                                    repeat_delay=1000)
+    ani.save(path)
+    print("Saved {}".format(path))

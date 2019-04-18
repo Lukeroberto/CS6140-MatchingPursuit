@@ -1,10 +1,12 @@
 import numpy as np
 import scipy.signal
 from tqdm import tqdm_notebook as tqdm
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 from utils.dataset_utils import generateImagePatches
 
-def orthogonalMatchingPursuit(image, features, k_matches):
+def orthogonalMatchingPursuit(image, features, k_matches, verbose=False):
     patch_size = features[0].shape[0]
 
     # Loops through patches in an image
@@ -20,9 +22,14 @@ def orthogonalMatchingPursuit(image, features, k_matches):
 
     # Sparse Code output
     S_code = list()
-
+    
+    # Progress bar
+    pbar = range(k_matches)
+    if verbose:
+        pbar = tqdm(range(k_matches))
+        
     # Loop over for K best matches
-    for i in tqdm(range(k_matches)):
+    for i in pbar:
 
         # Match list is number of patchs by number of features
         match_list = np.matmul(mat_patches, mat_features.T)
@@ -39,14 +46,19 @@ def orthogonalMatchingPursuit(image, features, k_matches):
 
     return S_code
 
-def convolutionalMatchingPursuit(image, features, k_matches):
+def convolutionalMatchingPursuit(image, features, k_matches, verbose=False):
     image_float = image.astype(np.float32) / 256
     
     # Sparse Code output
     S_code = list()
 
+    # Progress bar
+    pbar = range(k_matches)
+    if verbose:
+        pbar = tqdm(range(k_matches))
+        
     # Loop over for K best matches
-    for i in tqdm(range(k_matches)):
+    for i in pbar:
 
         # Keep track of patch convolutions
         match_list = np.zeros(features.shape[0]) 
@@ -68,6 +80,18 @@ def convolutionalMatchingPursuit(image, features, k_matches):
 
     return S_code
 
+def temporalMatchingPursuit(image, features, k_matches):
+    pass
+
+def videoMatchingPursuit(video, features, k_matches, algo):
+    
+    S_codes = list()
+    # Loop over all images in video
+    for image in tqdm(video):
+        S_codes.append(algo(image, features, k_matches)) 
+    
+    return S_codes
+
 def generateReconImage(S_code, original_image, features):
     patch_size = features[0].shape[0]
     stride = original_image.shape[1] // patch_size
@@ -86,4 +110,15 @@ def generateReconImage(S_code, original_image, features):
                     x * patch_size: (x + 1) * patch_size] += weight * features[feature_id]
 
     return recon_image
+
+def generateReconVideo(S_codes, original_video, features):
+    
+    # Reconstructed video
+    recon_video = np.zeros((len(original_video), original_video[0].shape[0], original_video[0].shape[1]))
+    
+    # Loop over and apply recon image
+    for i, (S_code, image) in enumerate(zip(S_codes, original_video)):
+        recon_video[i] = generateReconImage(S_code, image, features)
+    
+    return recon_video
 
