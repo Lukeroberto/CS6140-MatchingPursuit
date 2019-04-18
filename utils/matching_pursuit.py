@@ -12,13 +12,14 @@ def orthogonalMatchingPursuit(image, features, k_matches, verbose=False):
     # Loops through patches in an image
     patches, num_patches = generateImagePatches(patch_size, image)
 
-    mat_patches = patches.reshape((patches.shape[0], np.prod(patches.shape[1:3])))
+    mat_patches = patches.reshape((patches.shape[0], np.prod(patches.shape[1:3]))) -0.5    
+    mat_patches_true = np.copy(mat_patches)
     mat_features = features.reshape((features.shape[0], np.prod(features.shape[1:3])))
 
     # Normalize the patch matrix, clip features
 #     row_sums = mat_patches.sum(axis=1)
 #     mat_patches = mat_patches / row_sums[:, np.newaxis]
-    mat_features = np.clip(mat_features, 0, 1)
+    # mat_features = np.clip(mat_features, 0, 1)
 
     # Sparse Code output
     S_code = list()
@@ -35,11 +36,12 @@ def orthogonalMatchingPursuit(image, features, k_matches, verbose=False):
         match_list = np.matmul(mat_patches, mat_features.T)
 
         # Get sorted indicies of match_list
-        best_match_ind = np.argmax(match_list.reshape(-1))
+        best_match_ind = np.argmax(np.abs(match_list.reshape(-1)))
         patch_id, feature_id = np.unravel_index(best_match_ind, (num_patches, features.shape[0]))
 
         # Remove contribution of feature from image
-        mat_patches[patch_id] -= match_list[patch_id, feature_id] * mat_features[feature_id]
+        mat_patches[patch_id] -= np.matmul(mat_patches_true, mat_features.T)[patch_id, feature_id] \
+                                         * mat_features[feature_id]
 
         # Add this feature to our sparse code
         S_code.append((patch_id, feature_id, match_list[patch_id, feature_id]))

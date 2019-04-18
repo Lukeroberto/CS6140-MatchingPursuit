@@ -90,7 +90,7 @@ def animateVideo(video):
     return ani
 
 def compareVideos(video1, video2):
-    f, (ax1, ax2) = plt.subplots(2, 1, sharey=True)
+    f, (ax1, ax2) = plt.subplots(1,2, sharey=True,figsize=(12,6))
     ims = []
     for i in range(len(video1)):
         im1 = ax1.imshow(video1[i], cmap="Greys_r", animated=True)

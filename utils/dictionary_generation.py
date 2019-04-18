@@ -4,7 +4,7 @@ from utils.dataset_utils import samplePatches, generateVideoPatches
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-def plotDictionary(features, title=''):
+def plotDictionary(features, title):
 	num_features = features.shape[0]
 	cols = 10
 	rows = int(np.ceil(num_features/cols))
@@ -25,20 +25,20 @@ def generatePSDDictionary(images, patch_size, num_samples, num_features):
 	samples = samplePatches(num_samples, video_patches)
 	pass
 
-def generateSparsePCADictionary(images, patch_size, num_samples, num_features):
-	video_patches, _ = generateVideoPatches(patch_size, images)
-	samples = samplePatches(num_samples, video_patches)
-	pca = SparsePCA(n_components=num_features, normalize_components=True,
-					alpha =1, max_iter=100)
+# def generateSparsePCADictionary(images, patch_size, num_samples, num_features):
+# 	video_patches, _ = generateVideoPatches(patch_size, images)
+# 	samples = samplePatches(num_samples, video_patches)
+# 	pca = SparsePCA(n_components=num_features, normalize_components=True,
+# 					alpha =1, max_iter=100)
 
 
-	# Squeeze sample patches to be array
-	pca.fit(samples.reshape(np.shape(samples)[0], np.shape(samples)[1] ** 2))
-	features = pca.components_
+# 	# Squeeze sample patches to be array
+# 	pca.fit(samples.reshape(np.shape(samples)[0], np.shape(samples)[1] ** 2))
+# 	features = pca.components_
 
-	filter_size = np.shape(samples)[1]
+# 	filter_size = np.shape(samples)[1]
 
-	return features.reshape(features.shape[0], filter_size, filter_size)
+# 	return features.reshape(features.shape[0], filter_size, filter_size)
 
 def generateOptSparseDictionary(images, patch_size, num_samples, num_features):
 	video_patches, _ = generateVideoPatches(patch_size, images)
@@ -52,29 +52,35 @@ def generateOptSparseDictionary(images, patch_size, num_samples, num_features):
 
 	filter_size = np.shape(samples)[1]
 
-	return features.reshape(features.shape[0], filter_size, filter_size)
+	features = (features.T/np.linalg.norm(features,axis=1).T).T
+	# features = (features.T - np.mean(features,axis=1).T).T
 
+	features = features.reshape(features.shape[0], filter_size, filter_size)
+
+	return features
+    
 def generateSIFTDictionary(images, patch_size, num_samples, num_features):
 	pass
 
 
 def computePCA(num_features, samples):
 
-    pca = PCA(n_components=num_features)
+	pca = PCA(n_components=num_features)
 
-    # Squeeze sample patches to be array
-    print("Num samples", len(samples))
-    pca.fit(np.reshape(samples, (np.shape(samples)[0], np.shape(samples)[1] ** 2)))
+	# Squeeze sample patches to be array
+	# print("Num samples", len(samples))
+	pca.fit(np.reshape(samples, (np.shape(samples)[0], np.shape(samples)[1] ** 2)))
 
-    features = pca.components_
+	features = pca.components_
 
-    filter_size = np.shape(samples)[1]
-    filter_features = np.zeros((len(features), filter_size, filter_size))
+	filter_size = np.shape(samples)[1]
 
-    for i, feature in enumerate(features):
-        filter_features[i] = np.reshape(feature, (filter_size, filter_size))
+	features = (features.T/np.linalg.norm(features,axis=1).T).T
+	# features = (features.T - np.mean(features,axis=1).T).T
 
-    return filter_features
+	features = features.reshape(features.shape[0], filter_size, filter_size)
+
+	return features
 
 
 def generatePCADictionary(images, patch_size, num_samples, num_features):
