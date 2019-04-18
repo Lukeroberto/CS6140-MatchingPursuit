@@ -1,5 +1,7 @@
 import numpy as np
 from PIL import Image
+import matplotlib.pyplot as plt
+from matplotlib import animation
 
 import glob
 
@@ -74,5 +76,6 @@ def generateGifFromVideo(video, path):
 
     ani = animation.ArtistAnimation(fig, ims, interval=5, blit=True,
                                     repeat_delay=1000)
-    ani.save(path)
-    print("Saved {}".format(path))
+    return ani
+    # ani.save(path)
+    # print("Saved {}".format(path))
