@@ -67,15 +67,40 @@ def samplePatches(num_samples, patches):
     random_patches = np.random.choice(patches.shape[0], num_samples, replace=False)
     return patches[random_patches, :, :]
 
-def generateGifFromVideo(video, path):
+def compareImages(image1, image2):
+    #Creates two subplots and unpacks the output array immediately
+    f, (ax1, ax2) = plt.subplots(2, 1, sharey=True)
+    ax1.imshow(image1, cmap="Greys_r")
+    ax1.axis("off")
+
+    ax2.imshow(image2, cmap="Greys_r")
+    ax2.axis("off")
+
+    plt.show()
+    
+def animateVideo(video):
     fig = plt.figure()
     ims = []
     for img in video:
         im = plt.imshow(img, cmap="Greys_r", animated=True)
         ims.append([im])
 
-    ani = animation.ArtistAnimation(fig, ims, interval=5, blit=True,
+    ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
                                     repeat_delay=1000)
     return ani
-    # ani.save(path)
-    # print("Saved {}".format(path))
+
+def compareVideos(video1, video2):
+    f, (ax1, ax2) = plt.subplots(2, 1, sharey=True)
+    ims = []
+    for i in range(len(video1)):
+        im1 = ax1.imshow(video1[i], cmap="Greys_r", animated=True)
+        im2 = ax2.imshow(video2[i], cmap="Greys_r", animated=True)
+        
+        ax1.axis("off")
+        ax2.axis("off")
+        ims.append([im1, im2])
+
+    ani = animation.ArtistAnimation(f, ims, interval=50, blit=True,
+                                    repeat_delay=1000)
+    return ani
+    
