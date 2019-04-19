@@ -1,8 +1,10 @@
 import numpy as np 
 from sklearn.decomposition import PCA, SparsePCA, DictionaryLearning
-from utils.dataset_utils import samplePatches, generateVideoPatches
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+
+from utils.dataset_utils import samplePatches, generateVideoPatches
+from utils.Kmeans import kmeans
 
 def plotDictionary(features, title):
 	num_features = features.shape[0]
@@ -23,22 +25,62 @@ def generatePSDDictionary(images, patch_size, num_samples, num_features):
 	# https://cs.nyu.edu/~yann/research/sparse/index.html
 	video_patches, _ = generateVideoPatches(patch_size, images)
 	samples = samplePatches(num_samples, video_patches)
-	pass
+	samples = samples.reshape(samples.shape[0], samples.shape[1]**2)
+	# m > n usually
+	n = samples.shape[1]
+	m = num_features
 
-# def generateSparsePCADictionary(images, patch_size, num_samples, num_features):
-# 	video_patches, _ = generateVideoPatches(patch_size, images)
-# 	samples = samplePatches(num_samples, video_patches)
-# 	pca = SparsePCA(n_components=num_features, normalize_components=True,
-# 					alpha =1, max_iter=100)
+	Z = npr.random(size=(m, num_samples))
+	B = npr.random(size=(n,m))
+	B = (B.T/np.linalg.norm(B, axis=1)).T
+	W = npr.random(size=(m,n))
+	D = npr.random(size=m)
+	G = np.diag(npr.random(size=m))
+
+	Y = samples.T #n  by num_samples
+
+	lmbda = 1.0
+	alpha = 1.0
+	lr = 1e-6
 
 
-# 	# Squeeze sample patches to be array
-# 	pca.fit(samples.reshape(np.shape(samples)[0], np.shape(samples)[1] ** 2))
-# 	features = pca.components_
+	for _ in range(200):
+		# keep G,D,W & B constant, minimize wrt Z
+		F = np.matmul(G, np.tanh(np.matmul(W,Y).T+D).T)
 
-# 	filter_size = np.shape(samples)[1]
+		for i in range(1000):
+			dJ = 2*np.matmul(B.T, (np.matmul(B,Z)-Y) ) + lmbda * np.sum(np.sign(Z), axis=0) + 2*alpha*(Z-F)
+			Z = Z - lr * dJ
+	
+		i = npr.randint(num_samples)
+		z = Z[:,i]
+		y = Y[:,i]
+		f = np.matmul(G, np.tanh(np.matmul(W,y).T+D).T)
+		# one step of stochastic gradient descent on G,D,W & B
 
-# 	return features.reshape(features.shape[0], filter_size, filter_size)
+		G -= -0.001*lr*2*alpha* np.matmul( G, z - f)
+		D -= -lr*2*alpha*np.matmul( (np.matmul(G, (1- np.power(np.tanh(np.matmul(W,y).T+D).T, 2)) )).T , z-f)
+		W -= -lr*2*alpha*y.T.dot(np.matmul(np.matmul(G, (1- np.power(np.tanh(np.matmul(W,y).T+D).T, 2)) ).T, z-f))
+		B -= 0.001*lr*np.outer(np.matmul(B,z) - y, z)
+
+		# print(np.linalg.norm(2*alpha* np.matmul( G.T, z - f)), \
+		# 	np.linalg.norm(2*alpha*np.matmul( (np.matmul(G, (1- np.power(np.tanh(np.matmul(W,y).T+D).T, 2)) )).T , z-f)), \
+		# 	np.linalg.norm(2*alpha*y.T.dot(np.matmul(np.matmul(G, (1- np.power(np.tanh(np.matmul(W,y).T+D).T, 2)) ).T, z-f))), \
+		# 	np.linalg.norm(np.outer(np.matmul(B,z) - y, z)))
+
+		B = (B.T/np.linalg.norm(B, axis=1)).T
+
+	return B.T.reshape((num_features, patch_size, patch_size))
+	
+def generateKMeansDictionary(images, patch_size, num_samples, num_features):
+	video_patches, _ = generateVideoPatches(patch_size, images)
+	samples = samplePatches(num_samples, video_patches)
+	samples = samples.reshape(samples.shape[0], samples.shape[1]**2).T
+	X = kmeans(samples, num_features)
+	X = X[np.sum(np.abs(X),axis=1) != 0.0] 
+	X = (X.T/np.linalg.norm(X,axis=1).T).T
+
+	return X.reshape((X.shape[0], patch_size, patch_size))
 
 def generateOptSparseDictionary(images, patch_size, num_samples, num_features):
 	video_patches, _ = generateVideoPatches(patch_size, images)

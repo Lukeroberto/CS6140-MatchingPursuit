@@ -1,8 +1,10 @@
 import numpy as np 
 from sklearn.decomposition import PCA, SparsePCA, DictionaryLearning
-from utils.dataset_utils import samplePatches, generateVideoPatches
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+
+from utils.dataset_utils import samplePatches, generateVideoPatches
+from utils.Kmeans import kmeans
 
 def plotDictionary(features, title):
 	num_features = features.shape[0]

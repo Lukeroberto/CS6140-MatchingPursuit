@@ -109,6 +109,7 @@ def orthogonalMatchingPursuit(image, features, k_matches, verbose=False):
     return S_code, recon_image + 0.5
 
 def videoMatchingPursuit(video, features, k_matches, algo):
+    print("Number of frames: ", len(video))
     
     S_codes = list()
     recon_video = np.zeros((len(video), video[0].shape[0], video[0].shape[1]))

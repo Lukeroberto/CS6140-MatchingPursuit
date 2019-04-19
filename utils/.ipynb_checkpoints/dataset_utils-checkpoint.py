@@ -88,7 +88,7 @@ def animateVideo(video):
                                     repeat_delay=1000)
     return ani
 
-def compareVideos(video1, video2):
+def compareVideos(videos):
     f, (ax1, ax2) = plt.subplots(1,2, sharey=True,figsize=(12,6))
     ims = []
     for i in range(len(video1)):
