@@ -155,7 +155,7 @@ def generateDictionaryPlots(images, patch_size, num_samples, num_features, s=1, 
 		name = alg_names[i]
 		for f in num_features:
 			features = alg(images, patch_size, num_samples, f)
-
+			f = features.shape[0]
 			rows = int(np.ceil(f/cols))
 			fig = plt.figure(figsize=(cols*s, s*rows))
 			gs = gridspec.GridSpec(rows, cols)
