@@ -30,7 +30,7 @@ def greedyMatchingPursuit(image, features, k_matches, verbose=False):
         pbar = tqdm(range(k_matches))
         
     # Loop over for K best matches
-    for i in pbar:
+    for _ in pbar:
 
         # Match list is number of patchs by number of features
         match_list = np.matmul(mat_patches, mat_features.T)
@@ -60,7 +60,7 @@ def convolutionalMatchingPursuit(image, features, k_matches, verbose=False):
 		pbar = tqdm(range(k_matches))
 
 	# Loop over for K best matches
-	for i in pbar:
+	for _ in pbar:
 
 		# Keep track of patch convolutions
 		match_list = np.zeros(features.shape[0]) 
@@ -69,7 +69,7 @@ def convolutionalMatchingPursuit(image, features, k_matches, verbose=False):
 		# Convolve features with image
 		for i, feature in enumerate(features): 
 			convolved_features[i] = scipy.signal.convolve2d(image_original, feature, mode="same")
-			match_list[i] = np.linalg.norm(convolved_features[i])
+			match_list[i] = np.amax(convolved_features[i].reshape(-1))
 
 		# Get sorted indicies of match_list
 		best_feature_ind = np.argmax(match_list)
