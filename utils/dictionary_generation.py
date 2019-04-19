@@ -82,22 +82,6 @@ def generateKMeansDictionary(images, patch_size, num_samples, num_features):
 
 	return X.reshape((X.shape[0], patch_size, patch_size))
 
-
-# def generateSparsePCADictionary(images, patch_size, num_samples, num_features):
-# 	video_patches, _ = generateVideoPatches(patch_size, images)
-# 	samples = samplePatches(num_samples, video_patches)
-# 	pca = SparsePCA(n_components=num_features, normalize_components=True,
-# 					alpha =1, max_iter=100)
-
-
-# 	# Squeeze sample patches to be array
-# 	pca.fit(samples.reshape(np.shape(samples)[0], np.shape(samples)[1] ** 2))
-# 	features = pca.components_
-
-# 	filter_size = np.shape(samples)[1]
-
-# 	return features.reshape(features.shape[0], filter_size, filter_size)
-
 def generateOptSparseDictionary(images, patch_size, num_samples, num_features):
 	video_patches, _ = generateVideoPatches(patch_size, images)
 	samples = samplePatches(num_samples, video_patches)

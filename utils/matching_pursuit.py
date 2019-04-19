@@ -49,41 +49,87 @@ def greedyMatchingPursuit(image, features, k_matches, verbose=False):
     return S_code
 
 def convolutionalMatchingPursuit(image, features, k_matches, verbose=False):
-	image_original = np.copy(image)
-	
-	# Sparse Code output
-	S_code = list()
+    recon_image = np.zeros_like(image)
+    e = np.copy(image)-0.5
+    h,w = image.shape
+    f_size = features.shape[1]
+    num_patches = (h-f_size)*(w-f_size)
+    num_features = features.shape[0]
+    patches = np.zeros((num_patches, f_size**2))
+    kernels = features.reshape((num_features, f_size**2)).T
 
-	# Progress bar
-	pbar = range(k_matches)
-	if verbose:
-		pbar = tqdm(range(k_matches))
+    for i in range(num_patches):
+        x,y = i // (e.shape[0]-f_size), i % (e.shape[0]-f_size)
+        patches[i] = e[x:x+f_size,y:y+f_size].reshape(-1)
 
-	# Loop over for K best matches
-	for _ in pbar:
+    S_code = list()
+    pbar = range(k_matches)
+    if verbose:
+        pbar = tqdm(range(k_matches))
+    S_code = []
+    for _ in pbar:
+        activations = np.matmul(patches, kernels)
+        tmp = np.copy(activations)
+        for p,f in S_code:
+            tmp[p,f] = 0
+        best_match_ind = np.argmax(np.abs(activations.reshape(-1)))
+        patch_id, feature_id = np.unravel_index(best_match_ind, activations.shape)
+        x,y = patch_id // (image.shape[0]-f_size), patch_id % (image.shape[0]-f_size)
 
-		# Keep track of patch convolutions
-		match_list = np.zeros(features.shape[0]) 
-		convolved_features = np.zeros((features.shape[0], image.shape[0], image.shape[1]))
+        recon_image[x:x+f_size,y:y+f_size] += activations[patch_id, feature_id]*features[feature_id]
+        e[x:x+f_size,y:y+f_size] -= activations[patch_id, feature_id]*features[feature_id]
+        #now we need to remove the contribution from all the patches that overlap
+        
 
-		# Convolve features with image
-		for i, feature in enumerate(features): 
-			convolved_features[i] = scipy.signal.convolve2d(image_original, feature, mode="same")
-			match_list[i] = np.amax(convolved_features[i].reshape(-1))
+        S_code.append((patch_id, feature_id))
+    plt.figure()
+    plt.imshow(image, cmap='Greys_r')
+    plt.figure()
+    plt.imshow(recon_image, cmap='Greys_r')
+    # print(S_code)
 
-		# Get sorted indicies of match_list
-		best_feature_ind = np.argmax(match_list)
+    # e = np.copy(image)-0.5
+    # recon_image = np.zeros_like(image)
 
-		# Remove contribution of feature from image
-		image -= convolved_features[best_feature_ind]
+    # # Sparse Code output
+    # S_code = list()
 
-		# Add this feature to our sparse code
-		S_code.append((best_feature_ind, match_list[best_feature_ind]))
+    # # Progress bar
+    # pbar = range(k_matches)
+    # if verbose:
+    # 	pbar = tqdm(range(k_matches))
 
-	return S_code
+    # num_features = features.shape[0]
+    # patch_size = features.shape[1]
+    # kernels = np.zeros((patch_size, patch_size, num_features))
+    # for i in range(num_features):
+    #     kernels[:,:,i] = features[i]
 
-def temporalMatchingPursuit(image, features, k_matches):
+    # # Loop over for K best matches
+    # for i in pbar:
+    #     activations = scipy.signal.convolve(e[:,:,None], kernels, mode='same')
+    #     best_match_ind = np.argmax(np.abs(activations.reshape(-1)))
+    #     x,y,f = np.unravel_index(best_match_ind, activations.shape)
+    #     image_patch = image[x:x+patch_size, y:y+patch_size]
+    #     s1, s2 = image_patch.shape
+    #     w = activations[x,y,f]
+
+    #     recon_image[x:x+patch_size, y:y+patch_size] += features[f,:s1,:s2]
+    #     e[x:x+patch_size, y:y+patch_size] = 0
+        
+    # plt.figure()
+    # plt.imshow(image,cmap="Greys_r")
+    # plt.figure()
+    # plt.imshow(recon_image,cmap="Greys_r")
+    # plt.show()
+        
+
+def temporalMatchingPursuit(image, features, k_matches, prior_code, verbose=False):
+    pbar = range(k_matches)
+    if verbose:
+        pbar = tqdm(range(k_matches))
     pass
+
 
 def videoMatchingPursuit(video, features, k_matches, algo):
     
