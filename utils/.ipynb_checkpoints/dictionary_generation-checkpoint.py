@@ -52,7 +52,7 @@ def generateOptSparseDictionary(images, patch_size, num_samples, num_features):
 
 	filter_size = np.shape(samples)[1]
 
-	features = (features.T/np.linalg.norm(features,axis=1).T).T
+# 	features = (features.T/np.linalg.norm(features,axis=1).T).T
 	# features = (features.T - np.mean(features,axis=1).T).T
 
 	features = features.reshape(features.shape[0], filter_size, filter_size)

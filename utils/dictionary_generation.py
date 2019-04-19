@@ -1,12 +1,10 @@
 import numpy as np 
-import numpy.random as npr
 from sklearn.decomposition import PCA, SparsePCA, DictionaryLearning
-from utils.Kmeans import kmeans
 from utils.dataset_utils import samplePatches, generateVideoPatches
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-def plotDictionary(features, title=''):
+def plotDictionary(features, title):
 	num_features = features.shape[0]
 	cols = 10
 	rows = int(np.ceil(num_features/cols))
@@ -94,12 +92,16 @@ def generateOptSparseDictionary(images, patch_size, num_samples, num_features):
 
 	filter_size = np.shape(samples)[1]
 
-	features = (features.T/np.linalg.norm(features,axis=1).T).T
+# 	features = (features.T/np.linalg.norm(features,axis=1).T).T
 	# features = (features.T - np.mean(features,axis=1).T).T
 
 	features = features.reshape(features.shape[0], filter_size, filter_size)
 
 	return features
+    
+def generateSIFTDictionary(images, patch_size, num_samples, num_features):
+	pass
+
 
 def computePCA(num_features, samples):
 
@@ -127,25 +129,3 @@ def generatePCADictionary(images, patch_size, num_samples, num_features):
     samples = samplePatches(num_samples, video_patches)
 
     return computePCA(num_features, samples)
-
-def generateDictionaryPlots(images, patch_size, num_samples, num_features, s=1, cols=2):
-	# s is the size of each square
-	alg_names = ["PCA", "Kmeans", "OptSparse"]
-	algs = [generatePCADictionary, generateKMeansDictionary, generateOptSparseDictionary]
-	if not isinstance(num_features, list):
-		num_features = [num_features]
-	for i in range(len(algs)):
-		alg = algs[i]
-		name = alg_names[i]
-		for f in num_features:
-			features = alg(images, patch_size, num_samples, f)
-			f = features.shape[0]
-			rows = int(np.ceil(f/cols))
-			fig = plt.figure(figsize=(cols*s, s*rows))
-			gs = gridspec.GridSpec(rows, cols)
-			gs.update(wspace=0.0, hspace=0.05)
-			for j in range(f):
-				ax = plt.subplot(gs[j//cols, j % cols])
-				plt.imshow(features[j], cmap="Greys_r")
-				plt.axis("off")
-			plt.savefig("%s_k=%d_f=%d.png" % (name, patch_size, f))

@@ -8,21 +8,18 @@ from utils.dataset_utils import generateImagePatches
 
 def greedyMatchingPursuit(image, features, k_matches, verbose=False):
     patch_size = features[0].shape[0]
+    stride = image.shape[1] // patch_size
 
     # Loops through patches in an image
     patches, num_patches = generateImagePatches(patch_size, image)
 
-    mat_patches = patches.reshape((patches.shape[0], np.prod(patches.shape[1:3]))) -0.5    
-    mat_patches_true = np.copy(mat_patches)
+    mat_patches = patches.reshape((patches.shape[0], np.prod(patches.shape[1:3]))) - 0.5    
     mat_features = features.reshape((features.shape[0], np.prod(features.shape[1:3])))
-
-    # Normalize the patch matrix, clip features
-#     row_sums = mat_patches.sum(axis=1)
-#     mat_patches = mat_patches / row_sums[:, np.newaxis]
-    # mat_features = np.clip(mat_features, 0, 1)
-
-    # Sparse Code output
+	
+	# Return variables
     S_code = list()
+    recon_image = np.zeros_like(image)
+    residual = np.copy(mat_patches)
     
     # Progress bar
     pbar = range(k_matches)
@@ -32,19 +29,27 @@ def greedyMatchingPursuit(image, features, k_matches, verbose=False):
     # Loop over for K best matches
     for _ in pbar:
 
-        # Match list is number of patchs by number of features
-        match_list = np.matmul(mat_patches, mat_features.T)
+        # Match list is number of patches by number of features
+        match_list = np.matmul(residual, mat_features.T)
 
         # Get sorted indicies of match_list
         best_match_ind = np.argmax(np.abs(match_list.reshape(-1)))
         patch_id, feature_id = np.unravel_index(best_match_ind, (num_patches, features.shape[0]))
-
-        # Remove contribution of feature from image
-        mat_patches[patch_id] -= np.matmul(mat_patches_true, mat_features.T)[patch_id, feature_id] \
-                                         * mat_features[feature_id]
+		
+		# Compute weight of this feature
+        weight = np.matmul(mat_patches, mat_features.T)[patch_id, feature_id]
 
         # Add this feature to our sparse code
         S_code.append((patch_id, feature_id, match_list[patch_id, feature_id]))
+		
+        # Get location of image patch
+        y = patch_id // stride
+        x = patch_id % stride
+        recon_image[y * patch_size: (y + 1) * patch_size,
+                    x * patch_size: (x + 1) * patch_size] += weight * features[feature_id]
+		
+        # Compute Residual 
+        residual[patch_id] -= weight * mat_features[feature_id]
 
     return S_code
 
@@ -80,65 +85,77 @@ def convolutionalMatchingPursuit(image, features, k_matches, verbose=False):
         e[x:x+f_size,y:y+f_size] -= activations[patch_id, feature_id]*features[feature_id]
         #now we need to remove the contribution from all the patches that overlap
         
+    return S_code, recon_image + 0.5
 
-        S_code.append((patch_id, feature_id))
-    plt.figure()
-    plt.imshow(image, cmap='Greys_r')
-    plt.figure()
-    plt.imshow(recon_image, cmap='Greys_r')
-    # print(S_code)
+def orthogonalMatchingPursuit(image, features, k_matches, verbose=False):
+    """
+	Computes the sparse code, reconstructed image, and residual
+	via orthogonal matching pursuit
+	"""
+    patch_size = features[0].shape[0]
+    stride = image.shape[1] // patch_size
 
-    # e = np.copy(image)-0.5
-    # recon_image = np.zeros_like(image)
+    # Loops through patches in an image
+    patches, num_patches = generateImagePatches(patch_size, image)
 
-    # # Sparse Code output
-    # S_code = list()
-
-    # # Progress bar
-    # pbar = range(k_matches)
-    # if verbose:
-    # 	pbar = tqdm(range(k_matches))
-
-    # num_features = features.shape[0]
-    # patch_size = features.shape[1]
-    # kernels = np.zeros((patch_size, patch_size, num_features))
-    # for i in range(num_features):
-    #     kernels[:,:,i] = features[i]
-
-    # # Loop over for K best matches
-    # for i in pbar:
-    #     activations = scipy.signal.convolve(e[:,:,None], kernels, mode='same')
-    #     best_match_ind = np.argmax(np.abs(activations.reshape(-1)))
-    #     x,y,f = np.unravel_index(best_match_ind, activations.shape)
-    #     image_patch = image[x:x+patch_size, y:y+patch_size]
-    #     s1, s2 = image_patch.shape
-    #     w = activations[x,y,f]
-
-    #     recon_image[x:x+patch_size, y:y+patch_size] += features[f,:s1,:s2]
-    #     e[x:x+patch_size, y:y+patch_size] = 0
-        
-    # plt.figure()
-    # plt.imshow(image,cmap="Greys_r")
-    # plt.figure()
-    # plt.imshow(recon_image,cmap="Greys_r")
-    # plt.show()
-        
-
-def temporalMatchingPursuit(image, features, k_matches, prior_code, verbose=False):
+    mat_patches = patches.reshape((patches.shape[0], np.prod(patches.shape[1:3]))) - 0.5    
+    mat_features = features.reshape((features.shape[0], np.prod(features.shape[1:3])))
+	
+	# Return variables
+    S_code = list()
+    recon_image = np.zeros_like(image)
+    residual = np.copy(mat_patches)
+    
+    # Progress bar
     pbar = range(k_matches)
     if verbose:
         pbar = tqdm(range(k_matches))
-    pass
+        
+    # Loop over for K best matches
+    feature_ids = set()
+    for _ in pbar:
+
+        # Match list is number of patches by number of features
+        match_list = np.matmul(residual, mat_features.T)
+
+        # Get sorted indicies of match_list
+        best_match_ind = np.argmax(np.abs(match_list.reshape(-1)))
+        patch_id, feature_id = np.unravel_index(best_match_ind, (num_patches, features.shape[0]))
+
+        # Add this feature to our sparse code
+        S_code.append((patch_id, feature_id, match_list[patch_id, feature_id]))
+        
+		# Compute weight of this feature
+        weight = np.matmul(mat_patches, mat_features.T)[patch_id, feature_id]
+        
+        # Get location of image patch
+        y = patch_id // stride
+        x = patch_id % stride
+        recon_image[y * patch_size: (y + 1) * patch_size,
+                    x * patch_size: (x + 1) * patch_size] += weight * features[feature_id]
+		
+        # Compute Residual with all features used up til now
+        feature_ids.add(feature_id)
+        inds = np.array(list(feature_ids))
+        projection = np.matmul(np.linalg.pinv(mat_features[inds]), mat_features[inds])
+        residual[patch_id] = np.matmul((np.eye(projection.shape[0]) - projection) , mat_patches[patch_id])
+
+    return S_code, recon_image + 0.5
 
 
 def videoMatchingPursuit(video, features, k_matches, algo):
     
     S_codes = list()
-    # Loop over all images in video
-    for image in tqdm(video):
-        S_codes.append(algo(image, features, k_matches)) 
+    recon_video = np.zeros((len(video), video[0].shape[0], video[0].shape[1]))
     
-    return S_codes
+    # Loop over all images in video
+    for t in tqdm(range(len(video))):
+        S_code, recon_image = algo(video[t], features, k_matches)
+        
+        S_codes.append(S_code) 
+        recon_video[t] = recon_image
+    
+    return S_codes, recon_video
 
 def generateReconImage(S_code, original_image, features):
     patch_size = features[0].shape[0]
