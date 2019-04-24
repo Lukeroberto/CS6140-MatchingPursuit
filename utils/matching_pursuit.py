@@ -146,7 +146,6 @@ def convolutionalMatchingPursuit(image, features, k_matches, verbose=False):
                 continue
             p_id = _x*(e.shape[0]-f_size) + _y
             patches[p_id] = e[_x:_x+f_size,_y:_y+f_size].reshape(-1)
-            
 
         S_code.append(((x,y), feature_id))
 
